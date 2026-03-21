@@ -1,0 +1,802 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Intospark Weather Pro</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        :root {
+            --bg: #000000;
+            --text: #ffffff;
+            --hint: #9ca3af;
+            --btn: #0022ff; /* Яркий синий как на макете */
+            --glass: rgba(255, 255, 255, 0.05);
+            --glass-border: rgba(255, 255, 255, 0.1);
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: var(--bg);
+            /* Увеличиваем размер фона для маневра анимации */
+            background-image:
+                radial-gradient(at 0% 0%, #100f15 0, transparent 50%),
+                radial-gradient(at 50% 0%, hsla(225,39%,30%,1) 0, transparent 50%),
+                radial-gradient(at 100% 0%, rgb(39, 93, 114) 0, transparent 50%);
+                
+            background-size: 200% 200%; /* Делаем фон больше экрана */
+            background-attachment: fixed;
+            color: var(--text);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            box-sizing: border-box;
+            overflow-x: hidden;
+            width: 100%;
+
+            /* Запускаем бесконечную анимацию */
+            animation: gradientMove 7s ease infinite;
+        }
+
+        .screens-container { width: 100%; max-width: 400px; }
+
+        .screen { display: none; width: 100%; flex-direction: column; animation: fadeIn 0.3s ease; }
+        .active { display: flex; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        /* HEADER / HERO */
+        .weather-header {
+            text-align: center;
+            padding: 20px 0;
+            position: relative;
+        }
+
+        .city-name { font-size: 24px; font-weight: 400; margin-bottom: 30px; }
+
+
+
+
+
+        /* CARDS */
+        .glass-card {
+            background: var(--glass);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid var(--glass-border);
+            border-radius: 30px;
+            padding: 20px;
+            margin-bottom: 15px;
+        }
+
+        .card-title {
+            font-size: 12px;
+            text-transform: uppercase;
+            color: var(--hint);
+            margin-bottom: 15px;
+            letter-spacing: 1px;
+        }
+
+        /* FORECAST LISTS */
+        .scroll-row {
+            display: flex;
+            overflow-x: auto;
+            gap: 8px;
+            padding-bottom: 5px;
+            scrollbar-width: none;
+        }
+        .scroll-row::-webkit-scrollbar { display: none; }
+
+        .forecast-item {
+            min-width: 55px;
+            background: rgba(255,255,255,0.03);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 16px 16px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 24px;
+        }
+
+        /* Специальные стили для главной карточки */
+        .main-weather-card {
+            padding: 25px 20px;
+            margin-top: 10px;
+        }
+
+        .main-weather-card .city-name {
+            text-align: center;
+            font-size: 22px;
+            margin-bottom: 20px;
+            font-weight: 400;
+        }
+
+        /* .hero-main {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 25px;
+        } */
+
+        .hero-main {
+            display: flex;
+            /* Разносит элементы к левому и правому краю */
+            justify-content: space-between; 
+            align-items: center;
+            
+            /* Добавляем внутренние отступы, чтобы элементы не "прилипали" к стенкам */
+            padding: 0 10px; 
+            margin-bottom: 25px;
+            width: 100%; /* Гарантируем, что контейнер занимает всю ширину */
+            box-sizing: border-box;
+        }
+
+        .temp-big {
+            font-size: 90px;
+            font-weight: 300;
+            line-height: 0.9;
+        }
+
+        .side-info {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            /* Выравниваем по правому краю, чтобы капсулы росли влево */
+            align-items: flex-end; 
+            /* Или align-items: flex-start, если хотите, чтобы они росли вправо */
+        }
+
+        .info-pill {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            padding: 4px 12px;
+            border-radius: 15px;
+            font-size: 13px;
+            white-space: nowrap;
+            color: #fff;
+        }
+
+        /* Стили для почасовых ячеек, чтобы они были похожи на макет */
+        #hourly-container .forecast-item {
+            min-width: 50px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 18px;
+            gap: 12px;
+            padding: 12px 8px;
+        }
+
+        .forecast-item .day { font-size: 13px; }
+        .forecast-item .icon { font-size: 20px; }
+        .forecast-item .temp { font-size: 20px; font-weight: bold; }
+        .forecast-item .range { font-size: 13px; color: var(--hint); }
+
+        /* SETTINGS */
+        input {
+            width: 100%; padding: 14px; background: rgba(255,255,255,0.05);
+            border: 1px solid var(--glass-border); border-radius: 15px;
+            color: white; margin: 10px 0; box-sizing: border-box;
+            font-size: 16px;
+        }
+        .btn-primary {
+            width: 100%; padding: 15px; border-radius: 15px; border: none;
+            background: var(--btn); color: white; font-weight: bold; cursor: pointer;
+        }
+
+        /* NAV BAR */
+        .nav-bar {
+            position: fixed;
+            bottom: 30px; /* Отступ от низа экрана */
+            left: 50%;
+            transform: translateX(-50%); /* Центрирование относительно экрана */
+            
+            background: rgba(68, 68, 83, 0.356); /* Темный фон с прозрачностью */
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            
+            padding: 8px 8px;
+            border-radius: 40px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            z-index: 1000; /* Чтобы была поверх всего */
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        }
+
+        .nav-btn {
+            width: 56px; height: 56px; border-radius: 50%;
+            border: 1px solid #9ca3af38;
+            background: transparent;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; transition: 0.3s;
+        }
+
+        .nav-btn img { width: 24px; height: 24px; filter: brightness(0.8); }
+        .nav-btn.active-nav { background: var(--btn); }
+        .nav-btn.active-nav img { filter: brightness(1); }
+
+
+        .detail-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+        }
+        .detail-item {
+            background: rgba(255, 255, 255, 0.03);
+            padding: 15px;
+            border-radius: 20px;
+            display: flex;
+            flex-direction: column;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        .detail-item .label {
+            font-size: 11px;
+            color: var(--hint);
+            text-transform: uppercase;
+            margin-bottom: 5px;
+            letter-spacing: 0.5px;
+        }
+        .detail-item .val {
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .chart-bar-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+            flex: 1;
+        }
+        .chart-bar {
+            width: 8px;
+            background: var(--btn);
+            border-radius: 4px 4px 0 0;
+            transition: height 1s ease-out;
+            opacity: 0.7;
+        }
+        .chart-label {
+            font-size: 9px;
+            color: var(--hint);
+        }
+
+        .precip-percent {
+            font-size: 10px;
+            font-weight: 600;
+            color: #54a0ff; /* Голубой цвет для акцента на воде */
+            margin-bottom: 2px;
+        }
+
+        /* Общая анимация легкого покачивания/пульсации */
+        @keyframes pulse {
+            0% { transform: scale(1); opacity: 0.8; }
+            50% { transform: scale(1.05); opacity: 1; }
+            100% { transform: scale(1); opacity: 0.8; }
+        }
+
+        /* Анимация движения облаков */
+        @keyframes cloudMove {
+            0% { transform: translateX(0); }
+            50% { transform: translateX(5px); }
+            100% { transform: translateX(0); }
+        }
+
+        /* Анимация вращения солнца */
+        @keyframes sunRotate {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Анимация мерцания звездочек (для ночи) */
+        @keyframes sparkle {
+            0%, 100% { opacity: 0.5; }
+            50% { opacity: 1; }
+        }
+
+        @keyframes gradientMove {
+            0% {
+                background-position: 0% 0%;
+            }
+            50% {
+                background-position: 100% 50%;
+            }
+            100% {
+                background-position: 0% 0%;
+            }
+            
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="screens-container">
+    <div id="weather-screen" class="screen active">
+    
+    <div class="glass-card main-weather-card">
+        <div class="city-name" id="main-city">Загрузка...</div>
+        
+        <div class="hero-main">
+            <div class="temp-big" id="main-temp">--°</div>
+            <div class="side-info">
+                <div class="info-pill" id="wind-speed">💨 -- м/с</div>
+                <div class="info-pill" id="humidity">💧 --%</div>
+            </div>
+        </div>
+
+        <div class="scroll-row" id="hourly-container">
+            </div>
+    </div>
+
+        <div class="glass-card detail-grid">
+        <div class="detail-item">
+            <span class="label">☀ УФ-индекс</span>
+            <span class="val" id="uv-index">--</span>
+        </div>
+        <div class="detail-item">
+            <span class="label">🌡 Ощущается</span>
+            <span class="val" id="feels-like">--°</span>
+        </div>
+        <div class="detail-item">
+            <span class="label">🌅 Восход</span>
+            <span class="val" id="sunrise">--:--</span>
+        </div>
+        <div class="detail-item">
+            <span class="label">🌇 Закат</span>
+            <span class="val" id="sunset">--:--</span>
+        </div>
+    </div>
+
+    <div class="glass-card" id="smart-advice-card">
+        <div class="card-title">Рекомендация</div>
+        <div style="display: flex; align-items: center; gap: 15px;">
+            <div id="advice-icon" style="font-size: 40px;">🧥</div>
+            <div id="advice-text" style="font-size: 14px; line-height: 1.4; opacity: 0.9;">
+                Загрузка рекомендаций...
+            </div>
+        </div>
+    </div>
+
+    <div class="glass-card">
+        <div class="card-title">Качество воздуха</div>
+        <div style="display: flex; align-items: center; gap: 15px;">
+            <div id="aqi-value" style="font-size: 32px; font-weight: bold;">--</div>
+            <div style="flex: 1;">
+                <div id="aqi-status" style="font-size: 14px; font-weight: 600; margin-bottom: 5px;">Загрузка...</div>
+                <div style="width: 100%; height: 6px; background: rgba(255,255,255,0.1); border-radius: 3px; position: relative;">
+                    <div id="aqi-bar" style="width: 0%; height: 100%; background: var(--btn); border-radius: 3px; transition: 1s;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="glass-card">
+        <div class="card-title">Вероятность осадков (%)</div>
+        <div id="precip-chart" style="display: flex; align-items: flex-end; justify-content: space-between; height: 60px; padding-top: 10px;">
+            </div>
+    </div>
+
+    <div class="glass-card">
+        <div class="card-title">Прогноз на 7 дней</div>
+        <div class="scroll-row" id="daily-container">
+            </div>
+    </div>
+    
+
+
+    <div style="height: 100px;"></div>
+</div>
+
+    <div id="settings-screen" class="screen">
+        <h2 style="text-align: center; margin: 30px 0 20px; font-weight: 300; letter-spacing: 1px;">Настройки</h2>
+        
+        <div class="glass-card">
+            <div style="color: var(--hint); font-size: 11px; text-transform: uppercase; margin-bottom: 8px; letter-spacing: 1px;">Ваш город</div>
+            <input type="text" id="city-input" placeholder="Например: Москва" style="margin-bottom: 120x;">
+            <button class="btn-primary" onclick="updateLocation()">Обновить город</button>
+        </div>
+
+        <div class="glass-card">
+            <div style="display: flex; align-items: center; gap: 15px;">
+                <div id="user-avatar" style="
+                    width: 50px; 
+                    height: 50px; 
+                    background: var(--btn); 
+                    border-radius: 50%; 
+                    display: flex; 
+                    align-items: center; 
+                    justify-content: center; 
+                    font-size: 20px; 
+                    font-weight: bold;
+                    box-shadow: 0 4px 15px rgba(0, 34, 255, 0.3);
+                ">?</div>
+                <div>
+                    <div id="user-name" style="font-weight: bold; font-size: 16px;">Пользователь</div>
+                    <div style="font-size: 12px; color: var(--hint); margin-top: 2px;">ID: <span id="user-id">0000</span></div>
+                </div>
+            </div>
+        </div>
+        
+        <div style="padding: 10px; text-align: center; color: var(--hint); font-size: 12px; opacity: 0.6;">
+            Intospark Weather 
+            
+        </div>
+    </div>
+
+    <div class="nav-bar">
+        <button class="nav-btn active-nav" id="nav-weather" onclick="showScreen('weather-screen')">
+            <img src="clouds.svg" alt="weather">
+        </button>
+        <button class="nav-btn" id="nav-settings" onclick="showScreen('settings-screen')">
+            <img src="icon-setting.svg" alt="settings">
+        </button>
+    </div>
+
+    <script>
+        const tg = window.Telegram.WebApp;
+        tg.expand();
+
+        // const weatherIcons = { 0: '☀️', 1: '🌤', 2: '⛅', 3: '☁️', 45: '🌫', 51: '🌦', 61: '🌧', 71: '❄️', 95: '⛈' };
+        // function getIcon(code) { return weatherIcons[code] || '🌡️'; }
+
+        const weatherIcons = { 
+            0: { emoji: '☀️', animation: 'sunRotate 15s linear infinite' }, // Ясно
+            1: { emoji: '🌤', animation: 'cloudMove 5s ease-in-out infinite' }, // Облачно с прояснениями
+            2: { emoji: '⛅', animation: 'cloudMove 6s ease-in-out infinite' }, // Переменная облачность
+            3: { emoji: '☁️', animation: 'cloudMove 7s ease-in-out infinite' }, // Пасмурно
+            45: { emoji: '🌫', animation: 'pulse 3s ease-in-out infinite' }, // Туман
+            51: { emoji: '🌦', animation: 'pulse 2s ease-in-out infinite' }, // Моросящий дождь
+            61: { emoji: '🌧', animation: 'pulse 1.5s ease-in-out infinite' }, // Дождь
+            71: { emoji: '❄️', animation: 'pulse 2s ease-in-out infinite' }, // Снегопад
+            95: { emoji: '⛈', animation: 'pulse 1s ease-in-out infinite' } // Гроза
+        };
+
+        function getIcon(code) { 
+            const iconData = weatherIcons[code];
+            if (iconData) {
+                return `<span style="display:inline-block; animation: ${iconData.animation};">${iconData.emoji}</span>`;
+            }
+            return '🌡️'; // Дефолтная иконка без анимации
+        }
+
+        function showScreen(id) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active-nav'));
+            
+            if (id === 'weather-screen') document.getElementById('nav-weather').classList.add('active-nav');
+            else document.getElementById('nav-settings').classList.add('active-nav');
+            
+            tg.HapticFeedback.impactOccurred('light');
+        }
+
+        async function updateLocation() {
+            const city = document.getElementById('city-input').value || 'Москва';
+            try {
+                const geoRes = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(city)}&count=1&language=ru&format=json`);
+                const geoData = await geoRes.json();
+                if (!geoData.results) { tg.showAlert("Город не найден"); return; }
+                const { latitude, longitude, name } = geoData.results[0];
+                localStorage.setItem('fav_city', JSON.stringify({lat: latitude, lon: longitude, name: name}));
+                loadWeather(latitude, longitude, name);
+                showScreen('weather-screen');
+            } catch (e) { tg.showAlert("Ошибка сети"); }
+        }
+        
+                // Инициализация юзера
+        if (tg.initDataUnsafe?.user) {
+            const u = tg.initDataUnsafe.user;
+            document.getElementById('user-name').innerText = u.first_name;
+            document.getElementById('user-avatar').innerText = u.first_name[0];
+            document.getElementById('user-id').innerText = u.id;
+        }
+
+        // async function loadWeather(lat, lon, name) {
+        //     document.getElementById('main-city').innerText = name;
+        //     try {
+        //         const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,wind_speed_10m,weather_code&hourly=temperature_2m,weather_code&daily=weather_code,temperature_2m_max,temperature_2m_min&timezone=auto`);
+        //         const data = await res.json();
+
+        //         // Текущая погода
+        //         document.getElementById('main-temp').innerText = Math.round(data.current.temperature_2m) + '°';
+        //         document.getElementById('wind-speed').innerText = `☁️ ${data.current.wind_speed_10m} м/с`;
+        //         document.getElementById('humidity').innerText = `💧 ${data.current.relative_humidity_2m}%`;
+
+        //         // Почасовой прогноз (имитация макета - первые 5 доступных часов)
+        //         // --- ПОЧАСОВОЙ ПРОГНОЗ (Исправленный) ---
+        //         const hourlyCont = document.getElementById('hourly-container');
+        //         hourlyCont.innerHTML = '';
+
+        //         // 1. Получаем текущий час (например, 14)
+        //         const currentHour = new Date().getHours();
+
+        //         // 2. Ищем, под каким индексом в данных API находится этот час
+        //         // Обычно API возвращает 168 часов (7 дней * 24ч), где индекс совпадает с часом для первого дня
+        //         const startIndex = currentHour; 
+
+        //         // 3. Выводим следующие 12 часов, начиная с текущего
+        //         for (let i = startIndex; i < startIndex + 12; i++) {
+        //             // Проверяем, что индекс не вышел за пределы массива
+        //             if (!data.hourly.time[i]) break;
+
+        //             const timeRaw = new Date(data.hourly.time[i]);
+        //             const hour = timeRaw.getHours();
+                    
+        //             // Форматируем время (добавляем 0 спереди, если нужно)
+        //             const displayTime = (hour < 10 ? '0' + hour : hour) + ":00";
+                    
+        //             // Помечаем текущий час словом "Сейчас" для красоты
+        //             const labelTime = (i === startIndex) ? "Сейчас" : displayTime;
+
+        //             hourlyCont.innerHTML += `
+        //                 <div class="forecast-item" ${i === startIndex ? 'style="border-color: var(--btn);"' : ''}>
+        //                     <span class="icon">${getIcon(data.hourly.weather_code[i])}</span>
+        //                     <span class="temp">${Math.round(data.hourly.temperature_2m[i])}°</span>
+        //                     <span class="day" style="color:var(--hint)">${labelTime}</span>
+        //                 </div>`;
+        //         }
+
+        //         // Дневной прогноз
+        //         const dailyCont = document.getElementById('daily-container');
+        //         dailyCont.innerHTML = '';
+        //         data.daily.time.forEach((date, i) => {
+        //             const dayName = new Date(date).toLocaleDateString('ru-RU', { weekday: 'short' });
+        //             dailyCont.innerHTML += `
+        //                 <div class="forecast-item">
+        //                     <span class="day">${dayName}</span>
+        //                     <span class="icon">${getIcon(data.daily.weather_code[i])}</span>
+        //                     <div class="range">
+        //                         <span>${Math.round(data.daily.temperature_2m_min[i])}°</span>
+        //                         <span style="opacity:0.5">${Math.round(data.daily.temperature_2m_max[i])}°</span>
+        //                     </div>
+        //                 </div>`;
+        //         });
+        //     } catch (e) { console.error(e); }
+        // }
+
+        // async function loadWeather(lat, lon, name) {
+        //     document.getElementById('main-city').innerText = name;
+        //     try {
+        //         // Добавлены параметры: apparent_temperature (ощущается), daily: uv_index_max, sunrise, sunset
+        //         const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,apparent_temperature,wind_speed_10m,weather_code&hourly=temperature_2m,weather_code&daily=weather_code,temperature_2m_max,temperature_2m_min,uv_index_max,sunrise,sunset&timezone=auto`);
+        //         const data = await res.json();
+        //         const airUrl = `https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${lat}&longitude=${lon}&current=european_aqi`;
+
+        //         // 1. Текущая погода
+        //         document.getElementById('main-temp').innerText = Math.round(data.current.temperature_2m) + '°';
+        //         document.getElementById('wind-speed').innerHTML = `💨 ${data.current.wind_speed_10m} м/с`;
+        //         document.getElementById('humidity').innerHTML = `💧 ${data.current.relative_humidity_2m}%`;
+
+        //         // 2. Новые блоки деталей
+        //         document.getElementById('feels-like').innerText = Math.round(data.current.apparent_temperature) + '°';
+        //         document.getElementById('uv-index').innerText = Math.round(data.daily.uv_index_max[0]);
+                
+        //         // Форматирование времени восхода/заката
+        //         const formatTime = (isoTime) => {
+        //             const date = new Date(isoTime);
+        //             return date.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+        //         };
+        //         document.getElementById('sunrise').innerText = formatTime(data.daily.sunrise[0]);
+        //         document.getElementById('sunset').innerText = formatTime(data.daily.sunset[0]);
+
+        //         // 3. Почасовой прогноз (с текущего часа)
+        //         const hourlyCont = document.getElementById('hourly-container');
+        //         hourlyCont.innerHTML = '';
+        //         const currentHour = new Date().getHours();
+        //         for (let i = currentHour; i < currentHour + 12; i++) {
+        //             if (!data.hourly.time[i]) break;
+        //             const hour = new Date(data.hourly.time[i]).getHours();
+        //             const displayTime = (hour < 10 ? '0' + hour : hour) + ":00";
+        //             hourlyCont.innerHTML += `
+        //                 <div class="forecast-item" ${i === currentHour ? 'style="border-color: var(--btn);"' : ''}>
+        //                     <span class="icon">${getIcon(data.hourly.weather_code[i])}</span>
+        //                     <span class="temp">${Math.round(data.hourly.temperature_2m[i])}°</span>
+        //                     <span class="day" style="color:var(--hint)">${i === currentHour ? 'Сейчас' : displayTime}</span>
+        //                 </div>`;
+        //         }
+
+        //         // 4. Прогноз на 7 дней
+        //         const dailyCont = document.getElementById('daily-container');
+        //         dailyCont.innerHTML = '';
+        //         data.daily.time.forEach((date, i) => {
+        //             const dayName = new Date(date).toLocaleDateString('ru-RU', { weekday: 'short' });
+        //             dailyCont.innerHTML += `
+        //                 <div class="forecast-item">
+        //                     <span class="day">${dayName}</span>
+        //                     <span class="icon">${getIcon(data.daily.weather_code[i])}</span>
+        //                     <div class="range">
+        //                         <span>${Math.round(data.daily.temperature_2m_min[i])}°</span>
+        //                         <span style="opacity:0.5">${Math.round(data.daily.temperature_2m_max[i])}°</span>
+        //                     </div>
+        //                 </div>`;
+        //         });
+
+        //         // --- БЛОК 3: Качество воздуха ---
+        //         const aqi = airData.current.european_aqi;
+        //         document.getElementById('aqi-value').innerText = aqi;
+        //         let aqiStatus = "Отлично";
+        //         let aqiColor = "#2ECC71";
+        //         if(aqi > 20) { aqiStatus = "Средне"; aqiColor = "#F1C40F"; }
+        //         if(aqi > 40) { aqiStatus = "Плохо"; aqiColor = "#E67E22"; }
+        //         if(aqi > 60) { aqiStatus = "Опасно"; aqiColor = "#E74C3C"; }
+                
+        //         document.getElementById('aqi-status').innerText = aqiStatus;
+        //         document.getElementById('aqi-status').style.color = aqiColor;
+        //         document.getElementById('aqi-bar').style.width = Math.min(aqi, 100) + '%';
+        //         document.getElementById('aqi-bar').style.backgroundColor = aqiColor;
+
+        //             } catch (e) {
+        //                 console.error("Ошибка загрузки погоды:", e);
+        //             }
+        // }
+
+            async function loadWeather(lat, lon, name) {
+        // Устанавливаем название города сразу
+        const cityElement = document.getElementById('main-city');
+        if (cityElement) cityElement.innerText = name;
+
+        try {
+            // 1. Формируем ссылки
+            const weatherUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,apparent_temperature,wind_speed_10m,weather_code&hourly=temperature_2m,weather_code,precipitation_probability&daily=weather_code,temperature_2m_max,temperature_2m_min,uv_index_max,sunrise,sunset&timezone=auto`;
+            const airUrl = `https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${lat}&longitude=${lon}&current=european_aqi`;
+
+            // 2. Загружаем данные одновременно
+            const [weatherRes, airRes] = await Promise.all([fetch(weatherUrl), fetch(airUrl)]);
+            const data = await weatherRes.json();
+            const airData = await airRes.json();
+
+            // --- ТЕКУЩАЯ ПОГОДА ---
+            if (document.getElementById('main-temp')) {
+                document.getElementById('main-temp').innerText = Math.round(data.current.temperature_2m) + '°';
+            }
+            if (document.getElementById('wind-speed')) {
+                document.getElementById('wind-speed').innerHTML = `💨 ${data.current.wind_speed_10m} м/с`;
+            }
+            if (document.getElementById('humidity')) {
+                document.getElementById('humidity').innerHTML = `💧 ${data.current.relative_humidity_2m}%`;
+            }
+
+            // --- ДЕТАЛИ (УФ, Ощущается, Восход, Закат) ---
+            if (document.getElementById('feels-like')) document.getElementById('feels-like').innerText = Math.round(data.current.apparent_temperature) + '°';
+            if (document.getElementById('uv-index')) document.getElementById('uv-index').innerText = Math.round(data.daily.uv_index_max[0]);
+            
+            const formatTime = (iso) => new Date(iso).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+            if (document.getElementById('sunrise')) document.getElementById('sunrise').innerText = formatTime(data.daily.sunrise[0]);
+            if (document.getElementById('sunset')) document.getElementById('sunset').innerText = formatTime(data.daily.sunset[0]);
+
+            // --- КАЧЕСТВО ВОЗДУХА (AQI) ---
+            const aqi = airData.current.european_aqi;
+            const aqiValElem = document.getElementById('aqi-value');
+            const aqiStatusElem = document.getElementById('aqi-status');
+            const aqiBarElem = document.getElementById('aqi-bar');
+
+            if (aqiValElem && aqiStatusElem && aqiBarElem) {
+                aqiValElem.innerText = aqi;
+                let status = "Отлично", color = "#2ECC71";
+                if(aqi > 20) { status = "Средне"; color = "#F1C40F"; }
+                if(aqi > 40) { status = "Плохо"; color = "#E67E22"; }
+                if(aqi > 60) { status = "Опасно"; color = "#E74C3C"; }
+                aqiStatusElem.innerText = status;
+                aqiStatusElem.style.color = color;
+                aqiBarElem.style.width = Math.min(aqi, 100) + '%';
+                aqiBarElem.style.backgroundColor = color;
+            }
+
+            // --- ГРАФИК ОСАДКОВ ---
+            // --- ГРАФИК ОСАДКОВ С ЦИФРАМИ ---
+            const precipCont = document.getElementById('precip-chart');
+            if (precipCont) {
+                precipCont.innerHTML = '';
+                const currentHour = new Date().getHours();
+                
+                // Берем 10 часов вперед
+                for (let i = currentHour; i < currentHour + 10; i++) {
+                    const prob = data.hourly.precipitation_probability[i] || 0;
+                    const h = new Date(data.hourly.time[i]).getHours();
+                    
+                    // Высота столбика (минимум 5px, чтобы его было видно при 0%)
+                    const barHeight = Math.max((prob / 100) * 40, 2); 
+
+                    precipCont.innerHTML += `
+                        <div class="chart-bar-container">
+                            <span class="precip-percent">${prob}%</span>
+                            <div class="chart-bar" style="height: ${barHeight}px; ${prob > 30 ? 'opacity: 1; background: #54a0ff;' : 'opacity: 0.4;'}"></div>
+                            <span class="chart-label">${h}:00</span>
+                        </div>`;
+                }
+            }
+
+            // --- ПОЧАСОВОЙ ПРОГНОЗ ---
+            const hourlyCont = document.getElementById('hourly-container');
+            if (hourlyCont) {
+                hourlyCont.innerHTML = '';
+                const currentHour = new Date().getHours();
+                for (let i = currentHour; i < currentHour + 12; i++) {
+                    if (!data.hourly.time[i]) break;
+                    const h = new Date(data.hourly.time[i]).getHours();
+                    const timeStr = h < 10 ? '0'+h+':00' : h+':00';
+                    hourlyCont.innerHTML += `
+                        <div class="forecast-item" ${i === currentHour ? 'style="border: 1px solid var(--btn);"' : ''}>
+                            <span class="icon">${getIcon(data.hourly.weather_code[i])}</span>
+                            <span class="temp">${Math.round(data.hourly.temperature_2m[i])}°</span>
+                            <span class="day" style="color:var(--hint)">${i === currentHour ? 'Сейчас' : timeStr}</span>
+                        </div>`;
+                }
+            }
+
+            // --- ПРОГНОЗ НА 7 ДНЕЙ ---
+            const dailyCont = document.getElementById('daily-container');
+            if (dailyCont) {
+                dailyCont.innerHTML = '';
+                data.daily.time.forEach((date, i) => {
+                    const dayName = new Date(date).toLocaleDateString('ru-RU', { weekday: 'short' });
+                    dailyCont.innerHTML += `
+                        <div class="forecast-item">
+                            <span class="day">${dayName}</span>
+                            <span class="icon">${getIcon(data.daily.weather_code[i])}</span>
+                            <div class="range">
+                                <span>${Math.round(data.daily.temperature_2m_min[i])}°</span>
+                                <span style="opacity:0.5">${Math.round(data.daily.temperature_2m_max[i])}°</span>
+                            </div>
+                        </div>`;
+                });
+            }
+
+            // --- БЛОК СОВЕТОВ (Теперь внутри области видимости data) ---
+            const adviceTextElem = document.getElementById('advice-text');
+            const adviceIconElem = document.getElementById('advice-icon');
+
+            if (adviceTextElem && adviceIconElem) {
+                const tempValue = Math.round(data.current.temperature_2m);
+                const windValue = data.current.wind_speed_10m;
+                
+                // Берем вероятность осадков на ближайшие 6 часов
+                const currentH = new Date().getHours();
+                const precipProb = data.hourly.precipitation_probability.slice(currentH, currentH + 6);
+                const maxProb = Math.max(...precipProb);
+
+                let advice = "";
+                let icon = "✨";
+
+                if (maxProb > 40) {
+                    advice = "Высок шанс осадков. Возьмите зонт или дождевик ☔";
+                    icon = "☂️";
+                } else if (tempValue < -5) {
+                    advice = "На улице морозно. Наденьте теплую куртку, шапку и перчатки 🧣";
+                    icon = "❄️";
+                } else if (tempValue < 15) {
+                    advice = "Прохладно. Легкая куртка или пальто будут в самый раз 🧥";
+                    icon = "🧥";
+                } else if (tempValue > 25) {
+                    advice = "Жаркая погода! Выбирайте легкую одежду и пейте больше воды 👕";
+                    icon = "🕶️";
+                } else {
+                    advice = "Погода комфортная. Идеальное время для прогулки 👕";
+                    icon = "🍃";
+                }
+
+                if (windValue > 10) advice += " Осторожно, сильный ветер!";
+
+                adviceTextElem.innerText = advice;
+                adviceIconElem.innerText = icon;
+            }
+
+
+        } catch (e) {
+            console.error("Ошибка в loadWeather:", e);
+        }
+
+
+
+    }
+
+        const saved = JSON.parse(localStorage.getItem('fav_city')) || {lat: 59.93, lon: 30.33, name: 'Санкт-Петербург'};
+        loadWeather(saved.lat, saved.lon, saved.name);
+    </script>
+</body>
+</html>
