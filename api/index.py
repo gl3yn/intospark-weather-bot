@@ -1,23 +1,25 @@
-from flask import Flask, request
+import os
 import telebot
-from telebot import types
+from flask import Flask, request
 
-TOKEN = 'bot_token'
-APP_URL = 'https://твой-проект.vercel.app' 
+TOKEN = os.environ.get('BOT_TOKEN')
 
 bot = telebot.TeleBot(TOKEN, threaded=False)
 app = Flask(__name__)
 
 @bot.message_handler(commands=['start'])
 def start(message):
-    markup = types.InlineKeyboardMarkup()
-    web_app = types.WebAppInfo(url=APP_URL)
-    btn = types.InlineKeyboardButton("Открыть погоду ☁️", web_app=web_app)
+
+    domain = request.host_url.replace('http://', 'https://')
+    
+    markup = telebot.types.InlineKeyboardMarkup()
+    web_app = telebot.types.WebAppInfo(url=domain)
+    btn = telebot.types.InlineKeyboardButton("Открыть Weather Pro ☁️", web_app=web_app)
     markup.add(btn)
     
-    bot.reply_to(message, f"Привет, {message.from_user.first_name}! Это Intospark Weather. Нажми кнопку ниже:", reply_markup=markup)
+    bot.reply_to(message, f"Привет, {message.from_user.first_name}! ✨\nНажми на кнопку, чтобы посмотреть погоду:", reply_markup=markup)
 
-@app.route('/', methods=['POST'])
+@app.route('/api', methods=['POST']) 
 def webhook():
     if request.headers.get('content-type') == 'application/json':
         json_string = request.get_data().decode('utf-8')
@@ -29,4 +31,4 @@ def webhook():
 
 @app.route('/')
 def index():
-    return "Bot is running"
+    return "Bot is running! Set your webhook to /api"
