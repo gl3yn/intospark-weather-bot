@@ -10,9 +10,9 @@ app = Flask(__name__)
 def start_command(message):
     markup = telebot.types.InlineKeyboardMarkup()
     # Ссылка на твой домен
-    my_app_url = "https://intospark-weather-bot.vercel.app" 
+    my_app_url = "https://intospark-weather-bot.vercel.app/index.html" 
     # Ссылка на само приложение внутри ТГ (создается в BotFather)
-    direct_link = "https://t.me/intospark_bot/app" 
+    direct_link = "https://t.me/IntosparkWeatherBot/app" 
     
     btn = telebot.types.InlineKeyboardButton(
         text="Открыть Weather Pro ☁️", 
