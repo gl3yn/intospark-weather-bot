@@ -24,12 +24,10 @@ def start_command(message):
     photo_url = f"https://intospark-weather-bot.vercel.app/banner.png?t={int(time.time())}"
     
     caption_text = (
-        f"<b>Intospark Weather — Погода в новом измерении</b> ☁️\n\n"
-        f"🙌 Исследуйте метеоусловия через уникальный интерфейс:\n\n"
+        f"<b>Intospark Weather — Погода прямо в Telegram</b> ☁️\n\n"
         f"1️⃣ <b><a href='{direct_link}'>Откройте приложение</a></b>\n"
         f"2️⃣ <b>Узнайте прогноз</b> для своего города с точностью до часа\n"
-        f"3️⃣ <b>Наслаждайтесь эстетикой</b> — дизайн меняется вместе с погодой\n\n"
-        f"Есть вопросы? Пишите в поддержку: @твой_ник 👨🏻‍💻"
+        f"Есть вопросы? Пишите в поддержку: @gleynbiz 👨🏻‍💻"
     )
 
     try:
