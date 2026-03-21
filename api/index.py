@@ -1,3 +1,4 @@
+import time
 import os
 import telebot
 from flask import Flask, request
@@ -20,8 +21,8 @@ def start_command(message):
     )
     markup.add(btn)
 
-    photo_url = f"{my_app_url}/banner.png" 
-
+    photo_url = f"https://intospark-weather-bot.vercel.app/banner.png?t={int(time.time())}"
+    
     caption_text = (
         f"<b>Intospark Weather — Погода в новом измерении</b> ☁️\n\n"
         f"🙌 Исследуйте метеоусловия через уникальный интерфейс:\n\n"
