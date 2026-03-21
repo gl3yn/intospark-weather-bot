@@ -11,7 +11,7 @@ app = Flask(__name__)
 def start_command(message):
     markup = telebot.types.InlineKeyboardMarkup()
     # Ссылка на твой дизайн (главная страница Vercel)
-    my_app_url = "https://intospark-weather-bot.vercel.app" 
+    my_app_url = "https://intospark-weather-bot.vercel.app/index.html" 
     
     btn = telebot.types.InlineKeyboardButton(
         text="Открыть Weather Pro ☁️", 
