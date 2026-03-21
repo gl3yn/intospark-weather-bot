@@ -19,7 +19,7 @@ def start_command(message):
     )
     markup.add(btn)
     
-    bot.reply_to(message, f"Привет, {message.from_user.first_name}! ✨\nНажми на кнопку ниже, чтобы запустить приложение.", reply_markup=markup)
+    bot.reply_to(message, f"Привет, {message.from_user.first_name}! ✨\nНажми н а кнопку ниже, чтобы запустить приложение.", reply_markup=markup)
 # ---------------------------------
 
 @app.route('/api', methods=['POST'])
