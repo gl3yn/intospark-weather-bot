@@ -25,7 +25,7 @@ def start_command(message):
     
     caption_text = (
         f"<b>Intospark Weather — Погода прямо в Telegram</b> ☁️\n\n"
-        f" <b><a href='{my_app_url}'>Откройте приложение</a></b>\n"
+        f" <b><a href='{direct_link}'>Откройте приложение</a></b>\n"
         f" <b>Узнайте прогноз</b> для своего города с точностью до часа\n\n"
         f"Есть вопросы? Пишите в поддержку: @gleynbiz 👨🏻‍💻"
     )
