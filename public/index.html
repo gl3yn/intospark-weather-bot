@@ -10,7 +10,7 @@
             --bg: #000000;
             --text: #ffffff;
             --hint: #9ca3af;
-            --btn: #0022ff; /* Яркий синий как на макете */
+            --btn: #0022ff; 
             --glass: rgba(255, 255, 255, 0.05);
             --glass-border: rgba(255, 255, 255, 0.1);
         }
@@ -18,13 +18,13 @@
         body {
             font-family: -apple-system, BlinkMacSystemFont, sans-serif;
             background-color: var(--bg);
-            /* Увеличиваем размер фона для маневра анимации */
+
             background-image:
                 radial-gradient(at 0% 0%, #100f15 0, transparent 50%),
                 radial-gradient(at 50% 0%, hsla(225,39%,30%,1) 0, transparent 50%),
                 radial-gradient(at 100% 0%, rgb(39, 93, 114) 0, transparent 50%);
                 
-            background-size: 200% 200%; /* Делаем фон больше экрана */
+            background-size: 200% 200%; 
             background-attachment: fixed;
             color: var(--text);
             margin: 0;
@@ -37,7 +37,6 @@
             overflow-x: hidden;
             width: 100%;
 
-            /* Запускаем бесконечную анимацию */
             animation: gradientMove 7s ease infinite;
         }
 
@@ -47,7 +46,6 @@
         .active { display: flex; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
-        /* HEADER / HERO */
         .weather-header {
             text-align: center;
             padding: 20px 0;
@@ -56,11 +54,6 @@
 
         .city-name { font-size: 24px; font-weight: 400; margin-bottom: 30px; }
 
-
-
-
-
-        /* CARDS */
         .glass-card {
             background: var(--glass);
             backdrop-filter: blur(10px);
@@ -79,7 +72,6 @@
             letter-spacing: 1px;
         }
 
-        /* FORECAST LISTS */
         .scroll-row {
             display: flex;
             overflow-x: auto;
@@ -101,7 +93,6 @@
             gap: 24px;
         }
 
-        /* Специальные стили для главной карточки */
         .main-weather-card {
             padding: 25px 20px;
             margin-top: 10px;
@@ -128,10 +119,9 @@
             justify-content: space-between; 
             align-items: center;
             
-            /* Добавляем внутренние отступы, чтобы элементы не "прилипали" к стенкам */
             padding: 0 10px; 
             margin-bottom: 25px;
-            width: 100%; /* Гарантируем, что контейнер занимает всю ширину */
+            width: 100%; 
             box-sizing: border-box;
         }
 
@@ -145,9 +135,7 @@
             display: flex;
             flex-direction: column;
             gap: 8px;
-            /* Выравниваем по правому краю, чтобы капсулы росли влево */
             align-items: flex-end; 
-            /* Или align-items: flex-start, если хотите, чтобы они росли вправо */
         }
 
         .info-pill {
@@ -160,7 +148,6 @@
             color: #fff;
         }
 
-        /* Стили для почасовых ячеек, чтобы они были похожи на макет */
         #hourly-container .forecast-item {
             min-width: 50px;
             background: rgba(255, 255, 255, 0.05);
@@ -175,7 +162,6 @@
         .forecast-item .temp { font-size: 20px; font-weight: bold; }
         .forecast-item .range { font-size: 13px; color: var(--hint); }
 
-        /* SETTINGS */
         input {
             width: 100%; padding: 14px; background: rgba(255,255,255,0.05);
             border: 1px solid var(--glass-border); border-radius: 15px;
@@ -187,14 +173,13 @@
             background: var(--btn); color: white; font-weight: bold; cursor: pointer;
         }
 
-        /* NAV BAR */
         .nav-bar {
             position: fixed;
-            bottom: 30px; /* Отступ от низа экрана */
+            bottom: 30px; 
             left: 50%;
-            transform: translateX(-50%); /* Центрирование относительно экрана */
+            transform: translateX(-50%); 
             
-            background: rgba(68, 68, 83, 0.356); /* Темный фон с прозрачностью */
+            background: rgba(68, 68, 83, 0.356); 
             backdrop-filter: blur(20px);
             -webkit-backdrop-filter: blur(20px);
             border: 1px solid rgba(255, 255, 255, 0.1);
@@ -204,7 +189,7 @@
             display: flex;
             align-items: center;
             gap: 8px;
-            z-index: 1000; /* Чтобы была поверх всего */
+            z-index: 1000; 
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
         }
 
@@ -268,31 +253,27 @@
         .precip-percent {
             font-size: 10px;
             font-weight: 600;
-            color: #54a0ff; /* Голубой цвет для акцента на воде */
+            color: #54a0ff; 
             margin-bottom: 2px;
         }
 
-        /* Общая анимация легкого покачивания/пульсации */
         @keyframes pulse {
             0% { transform: scale(1); opacity: 0.8; }
             50% { transform: scale(1.05); opacity: 1; }
             100% { transform: scale(1); opacity: 0.8; }
         }
 
-        /* Анимация движения облаков */
         @keyframes cloudMove {
             0% { transform: translateX(0); }
             50% { transform: translateX(5px); }
             100% { transform: translateX(0); }
         }
 
-        /* Анимация вращения солнца */
         @keyframes sunRotate {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
 
-        /* Анимация мерцания звездочек (для ночи) */
         @keyframes sparkle {
             0%, 100% { opacity: 0.5; }
             50% { opacity: 1; }
