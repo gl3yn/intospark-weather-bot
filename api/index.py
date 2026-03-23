@@ -10,13 +10,13 @@ app = Flask(__name__)
 @bot.message_handler(commands=['start'])
 def start_command(message):
     markup = telebot.types.InlineKeyboardMarkup()
-    # Ссылка на твой домен
+
     my_app_url = "https://intospark-weather-bot.vercel.app/index.html" 
-    # Ссылка на само приложение внутри ТГ (создается в BotFather)
+
     direct_link = "https://t.me/IntosparkWeatherBot/app" 
     
     btn = telebot.types.InlineKeyboardButton(
-        text="Открыть Weather Pro ☁️", 
+        text="Смотреть Погоду", 
         web_app=telebot.types.WebAppInfo(url=my_app_url)
     )
     markup.add(btn)
@@ -25,8 +25,8 @@ def start_command(message):
     
     caption_text = (
         f"<b>Intospark Weather — Погода прямо в Telegram</b> ☁️\n\n"
-        f"1️⃣ <b><a href='{direct_link}'>Откройте приложение</a></b>\n"
-        f"2️⃣ <b>Узнайте прогноз</b> для своего города с точностью до часа\n\n"
+        f" <b><a href='{direct_link}'>Откройте приложение</a></b>\n"
+        f" <b>Узнайте прогноз</b> для своего города с точностью до часа\n\n"
         f"Есть вопросы? Пишите в поддержку: @gleynbiz 👨🏻‍💻"
     )
 
